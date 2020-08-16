@@ -1,0 +1,11 @@
+custom:
+  service_name: scity-backend
+  stage: ${opt:stage, self:provider.stage}
+  resourcesStages:
+    prod: prod
+    dev: dev
+  retail_table: '${self:custom.service_name}-retailkwh-${self:custom.stage}'
+  retail_info_table: '${self:custom.service_name}-retailkwh-info-${self:custom.stage}'
+  raw_files_bucket: '${self:custom.service_name}-raw-files-${self:custom.stage}'
+  pythonRequirements:
+    dockerizePip: non-linux

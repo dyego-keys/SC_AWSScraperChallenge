@@ -1,0 +1,70 @@
+service: scity-storage-backend
+
+custom: ${file(../../serverless.common.yml):custom}
+
+provider:
+  name: aws
+  stage: dev
+  region: ap-southeast-2
+
+resources:
+  Resources:
+    RetailTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        TableName: '${self:custom.retail_table}'
+        AttributeDefinitions:
+          - AttributeName: loc_retail
+            AttributeType: S
+          - AttributeName: date_retail
+            AttributeType: S
+        KeySchema:
+          - AttributeName: loc_retail
+            KeyType: HASH
+          - AttributeName: date_retail
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    RetailInfoTable:
+        Type: 'AWS::DynamoDB::Table'
+        DeletionPolicy: Retain
+        Properties:
+          TableName: '${self:custom.retail_info_table}'
+          AttributeDefinitions:
+            - AttributeName: file_name
+              AttributeType: S
+          KeySchema:
+            - AttributeName: file_name
+              KeyType: HASH
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+    S3RetailRawData:
+        Type: 'AWS::S3::Bucket'
+        DeletionPolicy: Retain
+        Properties:
+          BucketName: '${self:custom.raw_files_bucket}'
+  Outputs:
+    RetailTableArn:
+        Value:
+          'Fn::GetAtt':
+            - RetailTable
+            - Arn
+        Export:
+          Name: '${self:custom.stage}-ExtRetailTableArn'
+    RetailInfoTable:
+        Value:
+          'Fn::GetAtt':
+            - RetailInfoTable
+            - Arn
+        Export:
+          Name: '${self:custom.stage}-ExtRetailInfoTableArn'
+    S3RetailRawData:
+        Value:
+          'Fn::GetAtt':
+            - S3RetailRawData
+            - Arn
+        Export:
+          Name: '${self:custom.stage}-ExtS3RetailRawDataArn'

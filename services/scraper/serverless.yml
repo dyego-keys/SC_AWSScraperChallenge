@@ -1,0 +1,66 @@
+service: scity-scraper-backend
+
+custom: ${file(../../serverless.common.yml):custom}
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: dev
+  region: ap-southeast-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:PutObject
+      Resource:
+        Fn::Join:
+          - ""
+          - - Fn::ImportValue: ${self:custom.stage}-ExtS3RetailRawDataArn
+            - "/*"
+        #- 'Fn::Join': [ "", [ "'Fn::ImportValue': ${self:custom.stage}-ExtS3RetailRawDataArn", "/*" ] ]
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+      Resource:
+        - 'Fn::ImportValue': ${self:custom.stage}-ExtRetailTableArn
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource:
+        - 'Fn::ImportValue': ${self:custom.stage}-ExtRetailInfoTableArn
+  environment:
+    SHEET_NAME: RawData
+    RETAIL_TABLE: ${self:custom.retail_table}
+    RETAIL_INFO_TABLE: ${self:custom.retail_info_table}
+    WEB_URL: https://www.mbie.govt.nz/building-and-energy/energy-and-natural-resources/energy-statistics-and-modelling/energy-statistics/energy-prices/electricity-cost-and-price-monitoring/
+    REGEX: qsdep-report-\d{2}-\w{3}-\d{4}.xlsx
+    FILE_URL_PREFIX: https://www.mbie.govt.nz/assets/Data-Files/Energy/nz-energy-quarterly-and-energy-in-nz/
+    BUCKET: ${self:custom.raw_files_bucket}
+
+functions:
+  parse_xlsx:
+    handler: parsefile.parse_xlsx
+    events:
+      - s3:
+          bucket: ${self:custom.raw_files_bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: qsdep-report-
+            - suffix: .xlsx
+          existing: true
+    package:
+      artifact:
+    timeout: 600
+  file_scrapper:
+    handler: filescrapper.file_scrapper
+    package:
+      artifact:
+
+
+
+plugins:
+  - serverless-python-requirements

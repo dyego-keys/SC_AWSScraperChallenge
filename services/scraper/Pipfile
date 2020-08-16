@@ -8,8 +8,8 @@ verify_ssl = true
 [packages]
 bs4 = "*"
 requests = "*"
-lxml = "*"
 openpyxl = "*"
+lxml = "*"
 dynamodb-json = "*"
 
 [requires]
